@@ -178,7 +178,7 @@ export default function RoomUploader() {
   };
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
         Add Room Reference Images
       </h2>
@@ -264,7 +264,7 @@ export default function RoomUploader() {
             !currentUser || // Not logged in
             !selectedHomeId // No home selected
           }
-          className="flex-1 bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+          className="flex-1 bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 cursor-pointer"
         >
           {uploading || analyzingItems ? "Processing..." : "Save Room"}
         </button>
@@ -272,7 +272,7 @@ export default function RoomUploader() {
         <button
           onClick={handleResetForm}
           disabled={uploading || analyzingItems}
-          className="flex-1 bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-400 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+          className="flex-1 bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-400 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 cursor-pointer"
         >
           Create New Room
         </button>

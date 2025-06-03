@@ -25,7 +25,7 @@ export default function Layout({ children }) {
           {children}
         </main>
 
-        <footer className="py-4 text-center text-gray-500 text-sm bg-gray-100 border-t border-gray-200">
+        <footer className="py-4 text-center text-gray-500 text-sm bg-gray-200 border-t border-gray-200">
           &copy; {currentYear} Roomathon 2. All rights reserved.
         </footer>
       </div>

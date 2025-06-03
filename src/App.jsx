@@ -153,25 +153,25 @@ function AppContent() {
         {currentUser ? (
           <>
             {currentView === "homes" && (
-              <div className="w-full max-w-3xl mx-auto">
+              <div className="w-full max-w-5xl mx-auto">
                 <HomeManager />
               </div>
             )}
 
             {currentView === "rooms_add" && selectedHomeId && (
-              <div className="w-full max-w-3xl bg-white rounded-xl shadow-lg p-6 md:p-8 mx-auto">
+              <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg mx-auto">
                 <RoomUploader />
               </div>
             )}
 
             {currentView === "rooms_view" && selectedHomeId && (
-              <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 md:p-8 mx-auto">
+              <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg mx-auto">
                 <RoomViewer />
               </div>
             )}
 
             {currentView === "compare" && selectedHomeId && (
-              <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 md:p-8 mx-auto">
+              <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg mx-auto">
                 <CompareRoomImages />
               </div>
             )}

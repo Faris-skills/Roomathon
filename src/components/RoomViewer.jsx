@@ -62,7 +62,7 @@ export default function RoomViewer() {
   }, [currentUser, selectedHomeId]); // Re-fetch when user or selected home changes
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
         Your Saved Rooms
       </h2>

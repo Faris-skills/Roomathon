@@ -252,7 +252,7 @@ export default function CompareRoomImages() {
   };
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">
         Compare Room Images
       </h2>

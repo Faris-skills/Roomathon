@@ -49,7 +49,7 @@ export default function HomeManager() {
   }
 
   return (
-    <div className="p-6 md:p-8 bg-white rounded-xl shadow-lg w-full max-w-lg mx-auto">
+    <div className="p-6 bg-white rounded-xl shadow-lg w-full max-w-5xl mx-auto">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Manage Your Homes</h2>
 
       {!currentUser ? (
@@ -111,7 +111,7 @@ export default function HomeManager() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+                className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 cursor-pointer"
                 disabled={isCreatingHome || !newHomeName.trim()}
               >
                 {isCreatingHome ? "Creating..." : "Create Home"}
