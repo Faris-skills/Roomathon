@@ -114,7 +114,7 @@ export default function RoomUploader() {
         disabled={
           uploading || !roomName.trim() || files.length === 0 || !currentUser
         }
-        className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+        className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 cursor-pointer"
       >
         {uploading ? "Uploading..." : "Save Room"}
       </button>

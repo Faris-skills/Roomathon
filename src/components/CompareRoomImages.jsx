@@ -193,25 +193,22 @@ export default function CompareRoomImages() {
               content: [
                 {
                   type: "text",
-                  // --- START OF IMPROVED PROMPT ---
                   text: `You are an AI assistant specialized in property inspection, comparing "Before" and "After" images of a rental room to identify significant changes.
 
-                  Carefully analyze the 'BEFORE IMAGES' (taken before tenancy) and 'AFTER IMAGES' (taken after tenancy). Your goal is to pinpoint and describe all **material differences** between the two sets. Focus on identifying items that are:
-
-                  1.  **MISSING ITEMS:** Objects clearly visible in 'Before' but entirely absent in 'After'. Be specific about the object and its prior location.
-                  2.  **ADDED ITEMS:** Objects clearly visible in 'After' but entirely absent in 'Before'. Describe the new object and its location.
-                  3.  **MOVED ITEMS:** Objects that have significantly changed their location, orientation, or arrangement within the room. State the object and describe its change in position.
-                  4.  **DAMAGE OR ALTERATIONS:** Any new visible damage (e.g., scratches, dents, stains, scuffs on walls/floors, broken items, torn fabrics, significant wear and tear) or alterations (e.g., new paint, removed/added permanent fixtures) present in 'After' that were not in 'Before'. Be precise about the type of damage/alteration and its specific location (e.g., "large scratch on the left wall," "stain on the carpet near the door").
-
+                  You are an expert at analyzing images and finding differences between them. 
+                  You will be given two images: a reference image and a comparison image. 
+                  Your task is to identify all the differences between these images and provide a detailed description of each difference.
+                  Focus on just Missing or added objects
+                  
+                  Format your response as a list of differences, with each difference clearly described.
+                  Be specific and detailed in your descriptions, mentioning the exact location and nature of each difference.
+        
                   **Instructions for your response:**
-                  - Provide a clear, itemized list for each category using bullet points.
-                  - If a category has no relevant changes, explicitly state "None" for that category.
                   - Be objective, factual, and concise. Do not speculate or invent details.
-                  - Focus on *significant* changes relevant to a property inspection. Ignore minor shifts due to camera angle, lighting variations, or small reflections unless they represent a *material change in the item's state or presence*.
-
+                  - List minor changes as well, provided it is a real identifiyable change.
+                  - Do not end in converstation like manner with would you like to suggest changes etc.
                   ---
                   BEFORE IMAGES:`,
-                  // --- END OF IMPROVED PROMPT ---
                 },
                 ...referenceImages.map((url) => ({
                   type: "image_url",
@@ -402,7 +399,7 @@ export default function CompareRoomImages() {
           loading ||
           loadingAuth
         }
-        className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+        className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 cursor-pointer"
       >
         {uploadingComparison
           ? "Uploading comparison images..."
