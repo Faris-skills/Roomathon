@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import livingRoomImg from "../assets/IMG_4301.JPG";
+import { uploadToCloudinary } from "../utils/cloudinary";
+import { compareImagesWithAI } from "../utils/openai";
 
 export const RoomInspection = () => {
   const { houseId, roomIndex } = useParams();
@@ -23,24 +25,45 @@ export const RoomInspection = () => {
   ];
 
   const currentRoom = rooms[currentIndex];
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [difference, setDifference] = useState(null);
 
-  // Reset upload & difference when room changes
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
+  const [difference, setDifference] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   useEffect(() => {
     setUploadedImage(null);
+    setUploadedImageUrl("");
     setDifference(null);
+    setError("");
   }, [roomIndex]);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith("image/")) {
       const previewUrl = URL.createObjectURL(file);
       setUploadedImage(previewUrl);
+      setLoading(true);
+      setError("");
+      try {
+        const uploadedUrl = await uploadToCloudinary(file);
+        setUploadedImageUrl(uploadedUrl);
 
-      // Simulate difference detection
-      const isMissing = Math.random() > 0.5;
-      setDifference(isMissing ? "red bear" : null);
+        const referenceImages = [
+          "https://res.cloudinary.com/dzqy1jljf/image/upload/v1750528732/f4srfqyra1e5xgtlhx5b.jpg",
+        ];
+        const result = await compareImagesWithAI(referenceImages, [
+          uploadedUrl,
+        ]);
+
+        setDifference(result);
+      } catch (err) {
+        console.error(err);
+        setError("An error occurred while processing the image.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -67,14 +90,13 @@ export const RoomInspection = () => {
   }
 
   return (
-    <div className="bg-white p-6 flex flex-col justify-between">
+    <div className="bg-white p-6 flex flex-col justify-between min-h-screen">
       {/* Title */}
       <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl shadow-lg p-6 max-w-xl mx-auto mb-6">
-        <h2 className="text-2xl font-bold mb-2">
-          Inspect: {currentRoom.name}
-        </h2>
+        <h2 className="text-2xl font-bold mb-2">Inspect: {currentRoom.name}</h2>
         <p className="text-sm">
-          Please capture a photo of this room. It will be compared with the expected setup.
+          Please capture a photo of this room. It will be compared with the
+          expected setup.
         </p>
       </div>
 
@@ -96,7 +118,6 @@ export const RoomInspection = () => {
           Compare Image
         </h3>
 
-        {/* Styled file input */}
         <label className="inline-block bg-indigo-500 text-white px-6 py-2 rounded-lg font-semibold cursor-pointer hover:bg-indigo-700 transition mb-4 w-full text-center">
           Upload / Capture Image
           <input
@@ -105,6 +126,7 @@ export const RoomInspection = () => {
             capture="environment"
             onChange={handleFileChange}
             className="hidden"
+            disabled={loading}
           />
         </label>
 
@@ -120,12 +142,26 @@ export const RoomInspection = () => {
           </div>
         )}
 
-        {/* Difference warning */}
-        {/* {difference && ( */}
-          <div className="bg-yellow-100 text-yellow-800 p-4 rounded mt-4">
-            ⚠️ The <strong>{difference}</strong> seems to be missing. Could you please take a picture of that item?
+        {/* Loader */}
+        {loading && (
+          <div className="text-center text-sm text-gray-600 mt-4">
+            🔄 Processing image...
           </div>
-        {/* )} */}
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="bg-red-100 text-red-800 p-4 rounded mt-4 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* AI Result */}
+        {difference && !loading && (
+          <div className="bg-yellow-100 text-yellow-800 p-4 rounded mt-4 text-sm whitespace-pre-wrap">
+            ⚠️ <strong>Differences Found:</strong> {difference}
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
@@ -133,6 +169,7 @@ export const RoomInspection = () => {
         {currentIndex > 0 ? (
           <button
             onClick={goToPreviousRoom}
+            disabled={loading}
             className="bg-indigo-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
           >
             Previous
@@ -143,7 +180,12 @@ export const RoomInspection = () => {
 
         <button
           onClick={goToNextRoom}
-          className="bg-pink-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-pink-700 transition"
+          disabled={loading}
+          className={`px-6 py-2 rounded-lg font-semibold transition ${
+            loading
+              ? "bg-gray-400 text-white cursor-not-allowed"
+              : "bg-pink-500 text-white hover:bg-pink-700"
+          }`}
         >
           {currentIndex < rooms.length - 1 ? "Next" : "Finish"}
         </button>
