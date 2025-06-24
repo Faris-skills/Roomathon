@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from "react-router-dom";
-import Navbar from "./Navbar";
 
 export const TenetHome = () => {
     const { houseId } = useParams();
