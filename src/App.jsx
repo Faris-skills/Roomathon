@@ -12,25 +12,42 @@ import { ToastContainer, toast } from "react-toastify";
 import { signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
 import "react-toastify/dist/ReactToastify.css";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { TenetHome } from "./components/TenetHome";
+import { RoomInspection } from "./components/RoomInspection";
+import { InspectionComplete } from "./components/InspectionComplete";
 
 export default function App() {
   return (
-    <AuthProvider>
-      <HomeProvider>
-        <AppContent />
-      </HomeProvider>
+    <Router>
+      <Routes>
+        {/* Routes that DON'T need AuthProvider */}
+        <Route path="/inspect/:houseId" element={<TenetHome />} />
+        <Route path="/inspect/:houseId/room/:roomIndex" element={<RoomInspection />} />
+        <Route path="/inspect/:houseId/complete" element={<InspectionComplete />} />
+
+        {/* All other routes that DO need Auth + Home providers */}
+        <Route
+          path="*"
+          element={
+            <AuthProvider>
+              <HomeProvider>
+                <AppContent />
+              </HomeProvider>
+            </AuthProvider>
+          }
+        />
+      </Routes>
+
       <ToastContainer
         position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
       />
-    </AuthProvider>
+    </Router>
   );
 }
 
