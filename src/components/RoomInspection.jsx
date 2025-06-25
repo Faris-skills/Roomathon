@@ -1,47 +1,109 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { db } from "../lib/firebase";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  Timestamp,
+  arrayUnion,
+} from "firebase/firestore";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { compareImagesWithAI } from "../utils/openai";
+import { toast } from "react-toastify";
 
 export const RoomInspection = () => {
-  const { houseId, roomIndex } = useParams();
+  const { inspectionId, roomIndex } = useParams();
   const navigate = useNavigate();
   const currentIndex = parseInt(roomIndex || "0", 10);
 
-  // States for fetched rooms and current room details
+  const [houseInspection, setHouseInspection] = useState(null);
+  const [homeId, setHomeId] = useState(null);
+
   const [rooms, setRooms] = useState([]);
   const [currentRoom, setCurrentRoom] = useState(null);
 
-  // States for inspection process
-  const [uploadedImagePreview, setUploadedImagePreview] = useState(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
+  const [uploadedImagePreviews, setUploadedImagePreviews] = useState([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
   const [difference, setDifference] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isProcessingComparison, setIsProcessingComparison] = useState(false);
+  const [isSavingResult, setIsSavingResult] = useState(false);
+  const [isSubmittingInspection, setIsSubmittingInspection] = useState(false);
 
-  // --- Fetch Rooms based on houseId ---
   useEffect(() => {
-    const fetchRooms = async () => {
-      if (!houseId) {
-        setError("No Home ID provided for inspection.");
+    const fetchHouseInspection = async () => {
+      if (!inspectionId) {
+        setError("No Inspection ID provided in the link.");
         setLoading(false);
         return;
       }
 
       setLoading(true);
       setError("");
-      setRooms([]);
-      setCurrentRoom(null);
+
+      try {
+        const inspectionDocRef = doc(db, "houseInspections", inspectionId);
+        const inspectionDocSnap = await getDoc(inspectionDocRef);
+
+        if (!inspectionDocSnap.exists()) {
+          setError("Inspection not found or link is invalid.");
+          setLoading(false);
+          return;
+        }
+
+        const inspectionData = inspectionDocSnap.data();
+        if (inspectionData.status !== "active") {
+          setError(
+            `This inspection link is not active. Status: ${inspectionData.status}.`
+          );
+          setLoading(false);
+          return;
+        }
+
+        setHouseInspection(inspectionData);
+        setHomeId(inspectionData.homeId);
+
+        if (!inspectionData.startedByTenantAt) {
+          await updateDoc(inspectionDocRef, {
+            startedByTenantAt: Timestamp.now(),
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching house inspection:", err);
+        setError("Failed to load inspection details. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHouseInspection();
+  }, [inspectionId]);
+
+  useEffect(() => {
+    const fetchRoomsAndComparison = async () => {
+      if (!homeId || !inspectionId) {
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+      setUploadedImagePreviews([]);
+      setUploadedImageUrls([]);
+      setDifference(null);
 
       try {
         const roomsRef = collection(db, "rooms");
-        // Query rooms belonging to this specific homeId (houseId from params)
         const q = query(
           roomsRef,
-          where("homeId", "==", houseId),
+          where("homeId", "==", homeId),
           orderBy("createdAt", "asc")
         );
         const querySnapshot = await getDocs(q);
@@ -52,61 +114,90 @@ export const RoomInspection = () => {
         }));
 
         if (fetchedRooms.length === 0) {
-          setError("No rooms found for this home.");
+          setError(
+            "No rooms found for this home, or they are not publicly accessible."
+          );
           setLoading(false);
           return;
         }
 
         setRooms(fetchedRooms);
-        // Set the current room based on the roomIndex from URL
+
         if (currentIndex >= 0 && currentIndex < fetchedRooms.length) {
-          setCurrentRoom(fetchedRooms[currentIndex]);
+          const roomToSet = fetchedRooms[currentIndex];
+          setCurrentRoom(roomToSet);
+
+          const roomComparisonDocRef = doc(
+            db,
+            "houseInspections",
+            inspectionId,
+            "roomComparisons",
+            roomToSet.id
+          );
+          const roomComparisonDocSnap = await getDoc(roomComparisonDocRef);
+
+          if (roomComparisonDocSnap.exists()) {
+            const roomComparisonData = roomComparisonDocSnap.data();
+            if (
+              roomComparisonData.comparisonEvents &&
+              roomComparisonData.comparisonEvents.length > 0
+            ) {
+              const latestEvent =
+                roomComparisonData.comparisonEvents[
+                  roomComparisonData.comparisonEvents.length - 1
+                ];
+              setUploadedImageUrls(latestEvent.uploadedImageUrls || []);
+              setUploadedImagePreviews(latestEvent.uploadedImageUrls || []);
+              setDifference(latestEvent.aiComparisonResult);
+            }
+          }
         } else {
-          setError("Room not found or index out of bounds.");
+          setError(
+            "Room index out of bounds. The specific room was not found for this home."
+          );
         }
       } catch (err) {
-        console.error("Error fetching rooms for inspection:", err);
-        setError("Failed to load rooms for inspection. Please try again.");
+        console.error("Error fetching rooms or comparison data:", err);
+        setError("Failed to load room data. Please check link or try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRooms();
-  }, [houseId, currentIndex]);
-
-  useEffect(() => {
-    setUploadedImagePreview(null);
-    setUploadedImageUrl("");
-    setDifference(null);
-    setError("");
-  }, [currentIndex]);
+    fetchRoomsAndComparison();
+  }, [homeId, inspectionId, currentIndex]);
 
   const handleFileChange = useCallback(
     async (e) => {
-      const file = e.target.files[0];
-      if (!file || !file.type.startsWith("image/")) {
-        setError("Please select a valid image file.");
+      const files = Array.from(e.target.files);
+      if (files.length === 0) {
+        setError("Please select at least one image file.");
+        return;
+      }
+      if (!files.every((file) => file.type.startsWith("image/"))) {
+        setError("All selected files must be valid image files.");
         return;
       }
 
-      if (!currentRoom) {
-        setError("Current room data is not available. Please wait or reload.");
+      if (!currentRoom || !inspectionId) {
+        setError("Missing room or inspection data. Cannot proceed.");
         return;
       }
 
-      setUploadedImagePreview(URL.createObjectURL(file));
+      const newPreviews = files.map((file) => URL.createObjectURL(file));
+      setUploadedImagePreviews(newPreviews);
       setIsProcessingComparison(true);
       setError("");
 
       try {
-        // 1. Upload the newly captured image to Cloudinary
-        const newUploadedUrl = await uploadToCloudinary(file);
-        setUploadedImageUrl(newUploadedUrl);
+        const uploadedUrls = [];
+        for (const file of files) {
+          const url = await uploadToCloudinary(file);
+          uploadedUrls.push(url);
+        }
+        setUploadedImageUrls(uploadedUrls);
 
-        // 2. Prepare reference images for comparison
         const referenceImageUrls = currentRoom.referenceImages || [];
-
         if (referenceImageUrls.length === 0) {
           setError(
             "No reference images available for this room to compare against."
@@ -115,34 +206,113 @@ export const RoomInspection = () => {
           return;
         }
 
-        // 3. Compare with AI
-        const result = await compareImagesWithAI(referenceImageUrls, [
-          newUploadedUrl,
-        ]);
+        const result = await compareImagesWithAI(
+          referenceImageUrls,
+          uploadedUrls
+        );
         setDifference(result);
+        toast.success("Images compared successfully!");
       } catch (err) {
         console.error("Comparison error:", err);
         setError(
           "An error occurred during image comparison. Please try again."
         );
+        toast.error("Image comparison failed.");
       } finally {
         setIsProcessingComparison(false);
       }
     },
-    [currentRoom]
+    [currentRoom, inspectionId]
   );
 
-  const goToNextRoom = () => {
+  const saveComparisonResult = useCallback(async () => {
+    if (
+      !inspectionId ||
+      !currentRoom ||
+      uploadedImageUrls.length === 0 ||
+      !difference
+    ) {
+      toast.warn("No valid comparison result to save for this room.");
+      return;
+    }
+
+    setIsSavingResult(true);
+    try {
+      const roomComparisonDocRef = doc(
+        db,
+        "houseInspections",
+        inspectionId,
+        "roomComparisons",
+        currentRoom.id
+      );
+
+      const newComparisonEvent = {
+        uploadedImageUrls: uploadedImageUrls,
+        aiComparisonResult: difference,
+        timestamp: Timestamp.now(),
+      };
+
+      await setDoc(
+        roomComparisonDocRef,
+        {
+          roomName: currentRoom.name,
+          referenceImageUrls: currentRoom.referenceImages || [],
+          comparisonEvents: arrayUnion(newComparisonEvent),
+        },
+        { merge: true }
+      );
+
+      toast.success("Comparison result saved for this room!");
+    } catch (err) {
+      console.error("Error saving comparison result:", err);
+      setError(
+        "Failed to save comparison result. Please check the link or try again."
+      );
+      toast.error("Failed to save comparison result.");
+    } finally {
+      setIsSavingResult(false);
+    }
+  }, [inspectionId, currentRoom, uploadedImageUrls, difference]);
+
+  const submitOverallInspection = useCallback(async () => {
+    if (!inspectionId) {
+      toast.error("Inspection ID missing for final submission.");
+      return;
+    }
+    if (isSubmittingInspection) return;
+
+    setIsSubmittingInspection(true);
+    try {
+      const inspectionDocRef = doc(db, "houseInspections", inspectionId);
+      await updateDoc(inspectionDocRef, {
+        status: "completed",
+        completedByTenantAt: Timestamp.now(),
+      });
+      toast.success("Inspection submitted successfully!");
+      navigate(`/inspect/${inspectionId}/complete`);
+    } catch (err) {
+      console.error("Error submitting overall inspection:", err);
+      toast.error("Failed to submit inspection. Please try again.");
+    } finally {
+      setIsSubmittingInspection(false);
+    }
+  }, [inspectionId, navigate]);
+
+  const handleNextOrFinish = async () => {
+    if (uploadedImageUrls.length > 0 && difference) {
+      await saveComparisonResult();
+    }
+
     if (currentIndex < rooms.length - 1) {
-      navigate(`/inspect/${houseId}/room/${currentIndex + 1}`);
+      navigate(`/inspect/${inspectionId}/room/${currentIndex + 1}`);
     } else {
-      navigate(`/inspect/${houseId}/complete`);
+      await submitOverallInspection();
     }
   };
 
   const goToPreviousRoom = () => {
     if (currentIndex > 0) {
-      navigate(`/inspect/${houseId}/room/${currentIndex - 1}`);
+      navigate(`/inspect/${inspectionId}/room/${currentIndex - 1}`);
     }
   };
 
@@ -150,26 +320,23 @@ export const RoomInspection = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <p className="text-xl text-indigo-700 font-semibold">
-          Loading room data...
+          {homeId ? "Loading room data..." : "Loading inspection details..."}
         </p>
       </div>
     );
   }
 
-  if (error && (!currentRoom || rooms.length === 0)) {
+  if (error) {
     return (
       <div className="p-6 text-center bg-red-100 text-red-700 rounded-md shadow-md max-w-lg mx-auto mt-10">
         <p className="text-lg font-semibold mb-2">Error Loading Inspection:</p>
         <p>{error}</p>
-        {!houseId && (
-          <p className="mt-2">
-            Please ensure you're accessing this page with a valid Home ID.
-          </p>
+        {!inspectionId && (
+          <p className="mt-2">A valid Inspection ID is required in the URL.</p>
         )}
-        {houseId && !rooms.length && (
+        {inspectionId && !houseInspection && (
           <p className="mt-2">
-            It seems there are no rooms associated with this home in your
-            collection.
+            Please ensure the inspection link is correct and active.
           </p>
         )}
       </div>
@@ -179,11 +346,17 @@ export const RoomInspection = () => {
   if (!currentRoom) {
     return (
       <div className="p-6 text-center bg-yellow-100 text-yellow-700 rounded-md shadow-md max-w-lg mx-auto mt-10">
-        <p className="text-lg font-semibold mb-2">Room Data Missing</p>
+        <p className="text-lg font-semibold mb-2">Room Not Found</p>
         <p>
-          Could not find details for the current room. Please check the URL or
-          try selecting a different room/home.
+          The specific room at index {currentIndex} could not be loaded for
+          Inspection ID: {inspectionId}.
         </p>
+        <button
+          onClick={() => navigate("/")}
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+        >
+          Go to Home
+        </button>
       </div>
     );
   }
@@ -195,7 +368,7 @@ export const RoomInspection = () => {
           Inspect: {currentRoom.name}
         </h2>
         <p className="text-sm text-center">
-          Please capture or upload a photo of this room for comparison with its
+          Please capture or upload photo(s) of this room for comparison with its
           reference setup.
         </p>
       </div>
@@ -225,42 +398,59 @@ export const RoomInspection = () => {
 
       <div className="mb-6 flex-grow">
         <h3 className="text-lg font-semibold text-indigo-500 mb-2">
-          Compare Image
+          Compare Image(s)
         </h3>
 
         <label
           className={`inline-block w-full text-center px-6 py-3 rounded-lg font-semibold transition
           ${
-            isProcessingComparison
+            isProcessingComparison || isSavingResult || isSubmittingInspection
               ? "bg-gray-400 text-white cursor-not-allowed"
               : "bg-indigo-500 text-white hover:bg-indigo-700 cursor-pointer"
           }`}
         >
-          {isProcessingComparison ? "Processing..." : "Upload / Capture Image"}
+          {isProcessingComparison
+            ? "Processing..."
+            : isSavingResult
+            ? "Saving..."
+            : isSubmittingInspection
+            ? "Submitting..."
+            : uploadedImageUrls.length > 0
+            ? "Upload More Images / Retake Photos"
+            : "Upload / Capture Image(s)"}
           <input
             type="file"
             accept="image/*"
-            capture="environment" // Suggests camera on mobile devices
+            multiple
             onChange={handleFileChange}
             className="hidden"
-            disabled={isProcessingComparison}
+            disabled={
+              isProcessingComparison || isSavingResult || isSubmittingInspection
+            }
           />
         </label>
 
-        {uploadedImagePreview && (
+        {uploadedImagePreviews.length > 0 && (
           <div className="mt-4">
-            <p className="text-sm text-gray-700 mb-1">Your uploaded image:</p>
-            <img
-              src={uploadedImagePreview}
-              alt="Uploaded preview"
-              className="w-full h-40 object-cover rounded border border-gray-300"
-            />
+            <p className="text-sm text-gray-700 mb-1">
+              Your uploaded image(s):
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {uploadedImagePreviews.map((url, idx) => (
+                <img
+                  key={idx}
+                  src={url}
+                  alt={`Uploaded preview ${idx + 1}`}
+                  className="w-full h-40 object-cover rounded border border-gray-300"
+                />
+              ))}
+            </div>
           </div>
         )}
 
         {difference && !isProcessingComparison && (
           <div className="bg-yellow-100 text-yellow-800 p-4 rounded mt-4 text-sm whitespace-pre-wrap shadow">
-            ⚠️ <strong>Differences Found:</strong> {difference}
+            ⚠️ <strong>AI Feedback:</strong> {difference}
           </div>
         )}
 
@@ -274,9 +464,17 @@ export const RoomInspection = () => {
       <div className="flex justify-between items-center mt-auto pt-6 border-t border-gray-200">
         <button
           onClick={goToPreviousRoom}
-          disabled={currentIndex === 0 || isProcessingComparison}
+          disabled={
+            currentIndex === 0 ||
+            isProcessingComparison ||
+            isSavingResult ||
+            isSubmittingInspection
+          }
           className={`px-6 py-2 rounded-lg font-semibold transition ${
-            currentIndex === 0 || isProcessingComparison
+            currentIndex === 0 ||
+            isProcessingComparison ||
+            isSavingResult ||
+            isSubmittingInspection
               ? "bg-gray-400 text-white cursor-not-allowed"
               : "bg-indigo-500 text-white hover:bg-indigo-700"
           }`}
@@ -285,15 +483,29 @@ export const RoomInspection = () => {
         </button>
 
         <button
-          onClick={goToNextRoom}
-          disabled={isProcessingComparison || !uploadedImageUrl || !difference}
+          onClick={handleNextOrFinish}
+          disabled={
+            isProcessingComparison ||
+            isSavingResult ||
+            isSubmittingInspection ||
+            uploadedImageUrls.length === 0 ||
+            !difference // Ensure at least one image uploaded and AI feedback received
+          }
           className={`px-6 py-2 rounded-lg font-semibold transition ${
-            isProcessingComparison || !uploadedImageUrl || !difference
+            isProcessingComparison ||
+            isSavingResult ||
+            isSubmittingInspection ||
+            uploadedImageUrls.length === 0 ||
+            !difference
               ? "bg-gray-400 text-white cursor-not-allowed"
               : "bg-pink-500 text-white hover:bg-pink-700"
           }`}
         >
-          {currentIndex < rooms.length - 1 ? "Next" : "Finish Inspection"}
+          {isSubmittingInspection
+            ? "Submitting..."
+            : currentIndex < rooms.length - 1
+            ? "Next Room"
+            : "Submit Inspection"}
         </button>
       </div>
     </div>

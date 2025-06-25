@@ -27,9 +27,9 @@ export default function App() {
     <Router>
       <Routes>
         {/* Routes that DON'T need AuthProvider */}
-        <Route path="/inspect/:houseId" element={<TenetHome />} />
-        <Route path="/inspect/:houseId/room/:roomIndex" element={<RoomInspection />} />
-        <Route path="/inspect/:houseId/complete" element={<InspectionComplete />} />
+        <Route path="/inspect/:inspectionId" element={<TenetHome />} />
+        <Route path="/inspect/:inspectionId/room/:roomIndex" element={<RoomInspection />} />
+        <Route path="/inspect/:inspectionId/complete" element={<InspectionComplete />} />
 
         {/* All other routes that DO need Auth + Home providers */}
         <Route

@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 
 export const TenetHome = () => {
-    const { houseId } = useParams();
+    const { inspectionId } = useParams();
 
     const navigate = useNavigate();
 
@@ -27,7 +27,7 @@ export const TenetHome = () => {
                         Please follow the steps below to complete the inspection.
                     </p>
                     <button
-                        onClick={() => navigate(`/inspect/${houseId}/room/0`)}
+                        onClick={() => navigate(`/inspect/${inspectionId}/room/0`)}
                         className="bg-pink-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-pink-700 transition"
                         >
                         Start Inspection

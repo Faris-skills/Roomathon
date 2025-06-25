@@ -1,5 +1,3 @@
-// src/components/InspectionComplete.jsx
-
 export const InspectionComplete = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-pink-50 p-6">
@@ -9,7 +7,7 @@ export const InspectionComplete = () => {
           Thank you for completing the inspection. A report will be generated and shared with the home owner shortly.
         </p>
         <a
-          href="/inspect/1"
+          href="/"
           className="inline-block mt-4 bg-pink-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-pink-700 transition"
         >
           Return Home
