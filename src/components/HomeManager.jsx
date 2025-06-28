@@ -1,9 +1,8 @@
-// src/components/HomeManager.jsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useHome } from '../contexts/HomeContext';
 import { db } from '../lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { toast } from 'react-toastify';
 
 export default function HomeManager() {
@@ -12,6 +11,9 @@ export default function HomeManager() {
   const [newHomeName, setNewHomeName] = useState('');
   const [newHomeAddress, setNewHomeAddress] = useState('');
   const [isCreatingHome, setIsCreatingHome] = useState(false);
+
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState('');
 
   const handleCreateHome = async (e) => {
     e.preventDefault();
@@ -43,6 +45,44 @@ export default function HomeManager() {
       setIsCreatingHome(false);
     }
   };
+
+  const handleGenerateLink = useCallback(async () => {
+    if (!selectedHomeId) {
+      toast.warn("Please select a home to generate a link.");
+      return;
+    }
+    if (!currentUser) {
+      toast.error("You must be logged in to generate an inspection link.");
+      return;
+    }
+
+    setIsGeneratingLink(true);
+    setGeneratedLink('');
+    try {
+      const newInspectionDocRef = await addDoc(collection(db, 'houseInspections'), {
+        homeId: selectedHomeId,
+        ownerUserId: currentUser.uid,
+        status: 'active', // 'active', 'completed', 'inactive'
+        createdAt: Timestamp.now(),
+      });
+
+      const link = `${window.location.origin}/inspect/${newInspectionDocRef.id}/room/0`;
+      setGeneratedLink(link);
+      toast.success("Inspection link generated successfully!");
+    } catch (error) {
+      console.error("Error generating link:", error);
+      toast.error("Failed to generate link. Please try again.");
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  }, [selectedHomeId, currentUser]);
+
+  const copyToClipboard = useCallback(() => {
+    if (generatedLink) {
+      navigator.clipboard.writeText(generatedLink);
+      toast.info("Link copied to clipboard!");
+    }
+  }, [generatedLink]);
 
   if (loadingHomes) {
     return <p className="text-center text-gray-600 py-4">Loading homes...</p>;
@@ -76,6 +116,33 @@ export default function HomeManager() {
                   </option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {selectedHomeId && (
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-xl font-semibold mb-4 text-gray-700 text-center">
+                Generate Inspection Link
+              </h3>
+              <button
+                onClick={handleGenerateLink}
+                disabled={isGeneratingLink}
+                className="w-full bg-green-600 text-white font-semibold py-3 rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 cursor-pointer"
+              >
+                {isGeneratingLink ? "Generating..." : "Generate New Inspection Link"}
+              </button>
+              {generatedLink && (
+                <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-200 break-words">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Share this link with the tenant:</p>
+                  <a href={generatedLink} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm font-mono">{generatedLink}</a>
+                  <button
+                    onClick={copyToClipboard}
+                    className="mt-2 w-full bg-indigo-500 text-white font-semibold py-2 rounded-lg text-sm hover:bg-indigo-600 transition-colors"
+                  >
+                    Copy Link
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
