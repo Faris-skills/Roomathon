@@ -20,7 +20,8 @@ import {
 import { TenetHome } from "./components/TenetHome";
 import { RoomInspection } from "./components/RoomInspection";
 import { InspectionComplete } from "./components/InspectionComplete";
-import { Emailjs } from "./components/Emailjs";
+import Navbar from "./components/Navbar";
+import InspectionViewer from "./components/InspectionViewer";
 
 export default function App() {
   return (
@@ -30,9 +31,34 @@ export default function App() {
         <Route path="/inspect/:inspectionId" element={<TenetHome />} />
         <Route path="/inspect/:inspectionId/room/:roomIndex" element={<RoomInspection />} />
         <Route path="/inspect/:inspectionId/complete" element={<InspectionComplete />} />
-        <Route path="/email" element={<Emailjs />} />
 
         {/* All other routes that DO need Auth + Home providers */}
+        <Route
+          path="/homes/:id"
+          element={
+            <AuthProvider>
+              {/* <HomeProvider> */}
+                <Navbar />
+                <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg mx-auto mt-6">
+                  <RoomViewer />
+                </div>
+              {/* </HomeProvider> */}
+            </AuthProvider>
+          }
+        />
+        <Route
+          path="/inspection/:id"
+          element={
+            <AuthProvider>
+              {/* <HomeProvider> */}
+                <Navbar />
+                <div className="w-full max-w-5xl mx-auto mt-6">
+                  <InspectionViewer />
+                </div>
+              {/* </HomeProvider> */}
+            </AuthProvider>
+          }
+        />
         <Route
           path="*"
           element={
@@ -110,61 +136,7 @@ function AppContent() {
 
   return (
     <>
-      <nav className="bg-gray-200 shadow shadow-gray-300 px-8 w-full">
-        <div className="md:h-16 h-auto py-4 mx-auto md:px-4 container flex items-center justify-between flex-wrap md:flex-nowrap">
-          <div className="text-indigo-500 font-bold text-lg md:order-1">
-            Roomathon 2
-          </div>
-
-          {currentUser && (
-            <div className="order-3 md:order-2 w-full md:w-auto mt-4 md:mt-0">
-              <ul className="flex flex-wrap gap-2 justify-start md:justify-center">
-                {[
-                  { label: "Homes", view: "homes" },
-                  { label: "Add Rooms", view: "rooms_add" },
-                  { label: "View Rooms", view: "rooms_view" },
-                  { label: "Compare", view: "compare" },
-                ].map(({ label, view }) => (
-                  <li key={view}>
-                    <button
-                      onClick={() => setCurrentView(view)}
-                      className={navButtonClasses(view)}
-                    >
-                      {label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {currentUser && !loadingAuth && (
-            <div className="order-2 md:order-3">
-              <button
-                onClick={handleSignOut}
-                className="p-2 bg-red-500 text-white rounded-xl shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-200 cursor-pointer"
-                aria-label="Sign Out"
-                title="Sign Out"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H5a3 3 0 01-3-3V7a3 3 0 013-3h5a3 3 0 013 3v1"
-                  />
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
+      <Navbar />
 
       <Layout>
         {currentUser ? (
@@ -202,7 +174,7 @@ function AppContent() {
                   </p>
                   <button
                     onClick={() => setCurrentView("homes")}
-                    className="bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                    className="bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer active"
                   >
                     Go to Homes
                   </button>

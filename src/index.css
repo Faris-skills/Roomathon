@@ -1,1 +1,48 @@
 @import "tailwindcss";
+
+body {
+  background-color: #0F0F11 !important;
+}
+
+.nav-bar {
+    /* background: linear-gradient(90deg,rgba(131, 58, 180, 1) 0%, rgba(253, 29, 29, 1) 100%); */
+    background-color: rgb(48, 43, 54, 1);
+}
+
+.log-out-button {
+    display: flex;
+    border-radius: 0px;
+    height: 70px;
+    align-items: center;
+    background: #0f0f118c;
+    color: white;
+}
+
+main {
+    background-color: #0F0F11;
+    /* color: white; */
+}
+
+.menu-bar ul li button {
+    background: none !important;
+    color: white !important;
+}
+
+.menu-bar ul li .active {
+  position: relative;
+  color: white;
+  background-color: transparent;
+}
+
+.menu-bar ul li .active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  /* background: linear-gradient(90deg, rgba(131, 58, 180, 1), rgba(253, 29, 29, 1)); */
+  background: #9810fa;
+  border-radius: 0;
+}
+
