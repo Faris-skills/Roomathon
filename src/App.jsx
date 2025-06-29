@@ -16,11 +16,11 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
 } from "react-router-dom";
 import { TenetHome } from "./components/TenetHome";
 import { RoomInspection } from "./components/RoomInspection";
 import { InspectionComplete } from "./components/InspectionComplete";
+import { Emailjs } from "./components/Emailjs";
 
 export default function App() {
   return (
@@ -30,6 +30,7 @@ export default function App() {
         <Route path="/inspect/:inspectionId" element={<TenetHome />} />
         <Route path="/inspect/:inspectionId/room/:roomIndex" element={<RoomInspection />} />
         <Route path="/inspect/:inspectionId/complete" element={<InspectionComplete />} />
+        <Route path="/email" element={<Emailjs />} />
 
         {/* All other routes that DO need Auth + Home providers */}
         <Route
@@ -92,10 +93,9 @@ function AppContent() {
   }
 
   const navButtonClasses = (viewName) =>
-    `px-4 py-2 rounded-lg text-sm md:text-base font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 cursor-pointer ${
-      currentView === viewName
-        ? "bg-indigo-600 text-white shadow-md"
-        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+    `px-4 py-2 rounded-lg text-sm md:text-base font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 cursor-pointer ${currentView === viewName
+      ? "bg-indigo-600 text-white shadow-md"
+      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
     }`;
 
   const handleSignOut = async () => {

@@ -3,6 +3,7 @@ import { db } from '../lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { toast } from 'react-toastify';
+import PropTypes from 'prop-types';
 
 const HomeContext = createContext();
 
@@ -51,15 +52,18 @@ export const HomeProvider = ({ children }) => {
 
   const selectedHome = homes.find(home => home.id === selectedHomeId);
 
-  const value = {
+  const value = React.useMemo(() => ({
     homes,
     selectedHomeId,
     setSelectedHomeId,
     loadingHomes,
     selectedHome, // Provide the full selected home object for convenience
-  };
-
+  }), [homes, selectedHomeId, loadingHomes, selectedHome]);
   return <HomeContext.Provider value={value}>{children}</HomeContext.Provider>;
+};
+
+HomeProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export const useHome = () => {
