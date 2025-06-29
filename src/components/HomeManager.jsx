@@ -1,41 +1,38 @@
-import React, { useCallback, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { useHome } from "../contexts/HomeContext";
-import { db } from "../lib/firebase";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
-import { toast } from "react-toastify";
+import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useHome } from '../contexts/HomeContext';
+import { db } from '../lib/firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { toast } from 'react-toastify';
 import {
   PencilIcon,
   TrashIcon,
   EnvelopeIcon,
   PlusIcon,
   EyeIcon,
-} from "@heroicons/react/24/solid";
-import { Link } from "react-router-dom";
+} from '@heroicons/react/24/solid';
+import { Link } from 'react-router-dom';
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL;
-const CLIENT_URL = import.meta.env.VITE_CLIENT_URL;
+
 export default function HomeManager() {
   const { currentUser } = useAuth();
   const { homes, selectedHomeId, setSelectedHomeId, loadingHomes } = useHome();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newHomeName, setNewHomeName] = useState("");
-  const [newHomeAddress, setNewHomeAddress] = useState("");
+  const [newHomeName, setNewHomeName] = useState('');
+  const [newHomeAddress, setNewHomeAddress] = useState('');
   const [isCreatingHome, setIsCreatingHome] = useState(false);
-  const [sortConfig, setSortConfig] = useState({
-    key: "name",
-    direction: "asc",
-  });
-  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
+
+  const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+  const CLIENT_URL = import.meta.env.VITE_CLIENT_URL;
 
   const handleSort = (key) => {
     setSortConfig((prev) => {
       if (prev.key === key) {
-        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
       } else {
-        return { key, direction: "asc" };
+        return { key, direction: 'asc' };
       }
     });
   };
@@ -45,23 +42,24 @@ export default function HomeManager() {
     let aValue = a[key];
     let bValue = b[key];
 
-    if (key === "createdAt") {
+    if (key === 'createdAt') {
       aValue = aValue?.toDate ? aValue.toDate() : new Date(0);
       bValue = bValue?.toDate ? bValue.toDate() : new Date(0);
     }
 
-    if (typeof aValue === "string") aValue = aValue.toLowerCase();
-    if (typeof bValue === "string") bValue = bValue.toLowerCase();
+    if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+    if (typeof bValue === 'string') bValue = bValue.toLowerCase();
 
-    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
     return 0;
   });
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState({
-    title: "Mr",
-    name: "",
-    email: "",
+    title: 'Mr',
+    name: '',
+    email: '',
+    homeId: ''
   });
 
   const [currentView, setCurrentView] = useState("homes");
@@ -79,15 +77,15 @@ export default function HomeManager() {
 
     setIsCreatingHome(true);
     try {
-      const docRef = await addDoc(collection(db, "homes"), {
+      const docRef = await addDoc(collection(db, 'homes'), {
         name: newHomeName.trim(),
         address: newHomeAddress.trim(),
         userId: currentUser.uid,
         createdAt: new Date(),
       });
       toast.success(`Home "${newHomeName}" created successfully!`);
-      setNewHomeName("");
-      setNewHomeAddress("");
+      setNewHomeName('');
+      setNewHomeAddress('');
       setSelectedHomeId(docRef.id);
       setIsModalOpen(false);
     } catch (error) {
@@ -96,24 +94,6 @@ export default function HomeManager() {
     } finally {
       setIsCreatingHome(false);
     }
-  };
-
-  const generateEmailContent = (title, name, homeId, link) => {
-    return `
-      <p>Hello ${title} ${name},</p>
-      <p>You are invited to inspect the home with ID <strong>${homeId}</strong>.</p>
-      <p>Click <a href="${link}">here</a> to view the inspection details.</p>
-      <p>Thank you,<br />Home Manager</p>
-    `;
-  };
-
-  const sendEmailRequest = async (email, subject, emailContent) => {
-    const response = await fetch(`${SERVER_URL}/api/send-email`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, subject, emailContent }),
-    });
-    return response.json();
   };
 
   const handleSendEmail = async (e) => {
@@ -127,63 +107,60 @@ export default function HomeManager() {
       toast.error("No home selected to send the inspection email for.");
       return;
     }
+    
+    const { title, name, email, homeId } = emailRecipient;
 
-    const { title, name, email } = emailRecipient;
+    if (!homeId) {
+      toast.error("No home selected.");
+      return;
+    }
 
     if (!name.trim() || !email.trim()) {
       toast.error("Recipient name and email are required.");
       return;
     }
 
-    try {
-      await handleGenerateLink();
-      const emailContent = generateEmailContent(title, name, selectedHomeId, generatedLink);
-      const subject = `Inspection Invitation for Home ID: ${selectedHomeId}`;
-
-      await sendEmailRequest(email.trim(), subject, emailContent);
-
-      toast.success(`Email invitation sent to ${title} ${name}!`);
-      setEmailRecipient({ title: "Mr", name: "", email: "" });
-      setIsEmailModalOpen(false);
-    } catch (err) {
-      console.error("Error sending email:", err);
-      toast.error("Failed to send email. Please try again.");
-    }
-  };
-
-  const handleGenerateLink = useCallback(async () => {
-    if (!selectedHomeId) {
-      toast.warn("Please select a home to generate a link.");
-      return;
-    }
-    if (!currentUser) {
-      toast.error("You must be logged in to generate an inspection link.");
-      return;
-    }
-
-    setIsGeneratingLink(true);
-    setGeneratedLink("");
-    try {
-      const newInspectionDocRef = await addDoc(
-        collection(db, "houseInspections"),
-        {
-          homeId: selectedHomeId,
+      try {
+        const newInspectionDocRef = await addDoc(collection(db, 'houseInspections'), {
+          homeId: homeId,
           ownerUserId: currentUser.uid,
-          status: "active", // 'active', 'completed', 'inactive'
+          status: 'active', // 'active', 'completed', 'inactive'
           createdAt: Timestamp.now(),
-        }
-      );
+          name: `${title}  ${name.trim()}`,
+          email: email.trim(),
+          createdAt: new Date()
+        });
 
-      const link = `${CLIENT_URL}/inspect/${newInspectionDocRef.id}`;
-      setGeneratedLink(link);
-      toast.success("Inspection link generated successfully!");
-    } catch (error) {
-      console.error("Error generating link:", error);
-      toast.error("Failed to generate link. Please try again.");
-    } finally {
-      setIsGeneratingLink(false);
-    }
-  }, [selectedHomeId, currentUser]);
+        const subject = `Inspection Invitation for Home ID: ${homeId}`;
+        const emailContent = `
+          <p>Hello ${title} ${name},</p>
+          <p>You are invited to inspect the home with ID <strong>${homeId}</strong>.</p>
+          <p>Click <a href="${CLIENT_URL}/inspect/${newInspectionDocRef.id}">here</a> to view the inspection details.</p>
+          <p>Thank you,<br />Home Manager</p>
+        `;
+
+        const response = await fetch(`${SERVER_URL}/api/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email.trim(),
+            subject,
+            emailContent,
+          }),
+        });
+
+        const result = await response.json();
+
+        toast.success(`Email invitation sent to ${title} ${name}!`);
+        console.log("Email record added:", newInspectionDocRef.id);
+
+        setEmailRecipient({ title: 'Mr', name: '', email: '', homeId: '' });
+        setIsEmailModalOpen(false);
+      } catch (err) {
+        console.error("Error sending email:", err);
+        toast.error("Failed to send email. Please try again.");
+      }
+  }
 
   if (loadingHomes) {
     return <p className="text-center text-gray-600 py-4">Loading homes...</p>;
@@ -208,45 +185,35 @@ export default function HomeManager() {
               <tr className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm">
                 <th
                   className="p-4 text-left cursor-pointer hover:bg-indigo-600"
-                  onClick={() => handleSort("name")}
+                  onClick={() => handleSort('name')}
                 >
-                  Name{" "}
-                  {sortConfig.key === "name" &&
-                    (sortConfig.direction === "asc" ? "▲" : "▼")}
+                  Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   className="p-4 text-left cursor-pointer hover:bg-indigo-600"
-                  onClick={() => handleSort("address")}
+                  onClick={() => handleSort('address')}
                 >
-                  Address{" "}
-                  {sortConfig.key === "address" &&
-                    (sortConfig.direction === "asc" ? "▲" : "▼")}
+                  Address {sortConfig.key === 'address' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   className="p-4 text-left cursor-pointer hover:bg-indigo-600"
-                  onClick={() => handleSort("createdAt")}
+                  onClick={() => handleSort('createdAt')}
                 >
-                  Created At{" "}
-                  {sortConfig.key === "createdAt" &&
-                    (sortConfig.direction === "asc" ? "▲" : "▼")}
+                  Created At {sortConfig.key === 'createdAt' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th className="p-2 w-[120px] text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {sortedHomes.map((home) => (
-                <tr
-                  key={home.id}
-                  className="text-sm text-gray-800 hover:bg-gray-50"
-                >
+                <tr key={home.id} className="text-sm text-gray-800 hover:bg-gray-50">
                   <td className="p-4 border-t border-gray-200">{home.name}</td>
-                  <td className="p-4 border-t border-gray-200">
-                    {home.address || "—"}
-                  </td>
+                  <td className="p-4 border-t border-gray-200">{home.address || '—'}</td>
                   <td className="p-4 border-t border-gray-200">
                     {home.createdAt?.toDate
-                      ? home.createdAt.toDate().toLocaleDateString("en-GB") // DD/MM/YYYY
-                      : "N/A"}
+                      ? home.createdAt.toDate().toLocaleDateString('en-GB') // DD/MM/YYYY
+                      : 'N/A'}
+                    { home.createdAt?.toDate().toLocaleDateString('en-GB') || 'N/A'}
                   </td>
                   <td className="p-4 border-t border-gray-200">
                     <div className="flex items-center space-x-3">
@@ -264,13 +231,12 @@ export default function HomeManager() {
                       </Link>
                       <button
                         className="p-2 text-blue-600 rounded-full cursor-pointer"
-                        onClick={() => {
-                          setEmailRecipient({
-                            title: "Mr",
-                            name: "",
-                            email: "",
-                          });
-                          setIsEmailModalOpen(true);
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setEmailRecipient({ title: 'Mr', name: '', email: '', homeId: home.id });
+                           setTimeout(() => {
+                            setIsEmailModalOpen(true);
+                          }, 0);
                         }}
                         title="Email"
                       >
@@ -285,7 +251,7 @@ export default function HomeManager() {
                       </Link>
                       <button
                         className="p-2 text-red-600 rounded-full cursor-pointer"
-                        onClick={() => console.log("Delete", home.id)}
+                        onClick={() => console.log('Delete', home.id)}
                         title="Delete"
                       >
                         <TrashIcon className="w-4 h-4" />
@@ -297,14 +263,13 @@ export default function HomeManager() {
             </tbody>
           </table>
         </div>
+
       )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">
-              Create New Home
-            </h2>
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Create New Home</h2>
             <form onSubmit={handleCreateHome} className="space-y-4">
               <input
                 type="text"
@@ -334,14 +299,14 @@ export default function HomeManager() {
                   disabled={isCreatingHome}
                   className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  {isCreatingHome ? "Creating..." : "Create"}
+                  {isCreatingHome ? 'Creating...' : 'Create'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* onSubmit={(e) => {
+{/* onSubmit={(e) => {
                 e.preventDefault();
                 console.log('Send email to:', emailRecipient);
                 toast.success(`Email sent to ${emailRecipient.title} ${emailRecipient.name}`);
@@ -352,16 +317,16 @@ export default function HomeManager() {
           <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4 text-gray-800">Send Email</h2>
 
-            <form onSubmit={handleSendEmail} className="space-y-4">
+            <form
+              onSubmit={handleSendEmail}
+              className="space-y-4"
+            >
               <div className="flex gap-2">
                 <select
                   className="border border-gray-300 rounded-lg p-2 w-1/3"
                   value={emailRecipient.title}
                   onChange={(e) =>
-                    setEmailRecipient((prev) => ({
-                      ...prev,
-                      title: e.target.value,
-                    }))
+                    setEmailRecipient((prev) => ({ ...prev, title: e.target.value }))
                   }
                 >
                   <option value="Mr">Mr</option>
@@ -375,10 +340,7 @@ export default function HomeManager() {
                   placeholder="Full Name"
                   value={emailRecipient.name}
                   onChange={(e) =>
-                    setEmailRecipient((prev) => ({
-                      ...prev,
-                      name: e.target.value,
-                    }))
+                    setEmailRecipient((prev) => ({ ...prev, name: e.target.value }))
                   }
                   required
                 />
@@ -390,10 +352,7 @@ export default function HomeManager() {
                 placeholder="Email Address"
                 value={emailRecipient.email}
                 onChange={(e) =>
-                  setEmailRecipient((prev) => ({
-                    ...prev,
-                    email: e.target.value,
-                  }))
+                  setEmailRecipient((prev) => ({ ...prev, email: e.target.value }))
                 }
                 required
               />

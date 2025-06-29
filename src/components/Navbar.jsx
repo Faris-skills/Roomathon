@@ -4,7 +4,7 @@ import { auth } from "../lib/firebase";
 import { signOut } from "firebase/auth";
 import { toast } from "react-toastify";
 import { NavLink, useNavigate, Link } from "react-router-dom";
-import logo from "../assets/hackathon_logo_1.jpeg";
+import logo from "../assets/hackathon_logo.png";
 
 export default function Navbar() {
   const { currentUser, loadingAuth } = useAuth();
@@ -55,7 +55,7 @@ export default function Navbar() {
             <div className="order-2 md:order-3">
               <button
                 onClick={handleSignOut}
-                className="p-2 bg-red-500 text-white rounded-xl shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-200 cursor-pointer log-out-button gap-2"
+                className="p-2 bg-purple-500 text-white rounded-xl shadow-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-200 cursor-pointer log-out-button gap-2"
                 aria-label="Sign Out"
                 title="Sign Out"
               >

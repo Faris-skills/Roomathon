@@ -9,15 +9,12 @@ import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 export default function InspectionViewer() {
-  const { id: homeIdFromRoute, roomIndex } = useParams();
-  const [email, setEmails] = useState([]);
-  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const { currentUser } = useAuth();
-  useEffect(() => {
-  console.log("inspectionId:", homeIdFromRoute);
-}, [homeIdFromRoute]);
+    const { id: homeIdFromRoute, roomIndex } = useParams();
+    const [email, setEmails] = useState([]);
+    const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const { currentUser } = useAuth();
 
     useEffect(() => {
         const fetchHouseInspectionEmail = async () => {
@@ -32,7 +29,7 @@ export default function InspectionViewer() {
             setEmails([]);
 
             try {
-                const emailRef = collection(db, "inspectionEmail");
+                const emailRef = collection(db, "houseInspections");
                 const q = query(
                     emailRef,
                     where("homeId", "==", homeIdFromRoute)
@@ -101,7 +98,7 @@ export default function InspectionViewer() {
     return (
         <div className="p-6 max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-white">My Tenet List</h2>
+                <h2 className="text-2xl font-bold text-white">My Tenet Email List</h2>
             </div>
 
             {email.length > 0 && (
@@ -125,7 +122,13 @@ export default function InspectionViewer() {
                             className="p-4 text-left cursor-pointer hover:bg-indigo-600"
                             onClick={() => handleSort('createdAt')}
                         >
-                            Created At {sortConfig.key === 'createdAt' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                            Sent On {sortConfig.key === 'createdAt' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                        </th>
+                        <th
+                            className="p-4 text-left cursor-pointer hover:bg-indigo-600"
+                            onClick={() => handleSort('status')}
+                        >
+                            Status {sortConfig.key === 'status' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                         </th>
                         <th className="p-2 w-[120px] text-left">Actions</th>
                         </tr>
@@ -137,8 +140,26 @@ export default function InspectionViewer() {
                                 <td className="p-4 border-t border-gray-200">{email.email}</td>
                                 <td className="p-4 border-t border-gray-200">
                                 {email.createdAt?.toDate
-                                    ? email.createdAt.toDate().toLocaleDateString('en-GB') // DD/MM/YYYY
+                                    ? email.createdAt.toDate().toLocaleString('en-GB', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                    })
                                     : 'N/A'}
+                                </td>
+                                <td className="p-4 border-t border-gray-200">
+                                    {email.status === 'active' ? (
+                                        <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1">
+                                        Processing
+                                        </span>
+                                    ) : (
+                                        <span className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1">
+                                        Completed
+                                        </span>
+                                    )}
                                 </td>
                                 <td className="p-4 border-t border-gray-200">
                                     <button

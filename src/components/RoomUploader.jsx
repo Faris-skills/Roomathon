@@ -6,7 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 
-export default function RoomUploader() {
+export default function RoomUploader({ onClose, onRoomCreated }) {
   const { id: homeIdFromRoute } = useParams();
   const [roomName, setRoomName] = useState("");
   const [files, setFiles] = useState([]);
@@ -124,6 +124,8 @@ export default function RoomUploader() {
       toast.success("Room saved!");
       setRoomName("");
       setFiles([]);
+      if (onRoomCreated) onRoomCreated();
+      if (onClose) onClose();
     } catch (err) {
       toast.error(`Upload failed: ${err.message}`);
     } finally {
@@ -206,7 +208,7 @@ export default function RoomUploader() {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex justify-end space-x-3">
         <button
           onClick={handleUpload}
           disabled={uploading || analyzingItems || !roomName.trim() || files.length === 0}
@@ -215,12 +217,12 @@ export default function RoomUploader() {
           {uploading || analyzingItems ? "Processing..." : "Save Room"}
         </button>
 
-        <button
+        {/* <button
           onClick={handleResetForm}
           className="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition"
         >
           Create New Room
-        </button>
+        </button> */}
       </div>
     </div>
   );
