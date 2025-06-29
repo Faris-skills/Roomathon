@@ -14,6 +14,7 @@ import {
 import { Link } from "react-router-dom";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+const CLIENT_URL = import.meta.env.VITE_CLIENT_URL;
 export default function HomeManager() {
   const { currentUser } = useAuth();
   const { homes, selectedHomeId, setSelectedHomeId, loadingHomes } = useHome();
@@ -173,7 +174,7 @@ export default function HomeManager() {
         }
       );
 
-      const link = `${window.location.origin}/inspect/${newInspectionDocRef.id}/room/0`;
+      const link = `${CLIENT_URL}/inspect/${newInspectionDocRef.id}`;
       setGeneratedLink(link);
       toast.success("Inspection link generated successfully!");
     } catch (error) {
