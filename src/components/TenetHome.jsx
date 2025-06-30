@@ -64,15 +64,16 @@ export const TenetHome = () => {
             <>
             <div className="min-h-screen bg-indigo-50 flex flex-col items-center justify-center bg-pink-50 p-6">
                 <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl shadow-lg p-6 max-w-xl mx-auto">
-                <h1 className="text-2xl font-bold mb-4">Hi {tenetData.name} 👋</h1>
+                <h1 className="text-2xl font-bold mb-4">Hey {tenetData.name} 👋</h1>
                 <p className="mb-6">
-                    Please follow the steps below to complete the inspection.
+                  Let’s take a closer look at the home together. Ready when you are.
                 </p>
                 <button
-                    onClick={() => navigate(`/inspect/${inspectionId}/room/0`)}
+                    // onClick={() => navigate(`/inspect/${inspectionId}/room/0`)}
+                    onClick={() => navigate(`/inspect/${inspectionId}/roomList`)}
                     className="bg-pink-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-pink-700 transition"
                 >
-                    Start Inspection
+                  🚀 Begin Inspection Now
                 </button>
                 </div>
             </div>
@@ -85,10 +86,10 @@ export const TenetHome = () => {
             <div className="min-h-screen flex items-center justify-center bg-pink-50 p-6">
                 <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
                 <h2 className="text-2xl font-bold text-pink-600 mb-4">
-                    Inspection Completed 🎉
+                  All Set! 🏡✨
                 </h2>
                 <p className="text-gray-700">
-                    Please contact the house owner for further details.
+                  You've completed the inspection like a pro! If you have any questions or updates, the house owner is just a call away
                 </p>
                 </div>
             </div>
@@ -100,10 +101,10 @@ export const TenetHome = () => {
             <div className="min-h-screen flex items-center justify-center bg-pink-50 p-6">
                 <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
                 <h2 className="text-2xl font-bold text-pink-600 mb-4">
-                    Something went wrong 😞
+                    Oops! Something Didn't Go as Planned 😕
                 </h2>
                 <p className="text-gray-700">
-                    Please contact the house owner for further details.
+                    We couldn’t complete that step. Kindly contact the house owner for more information
                 </p>
                 </div>
             </div>

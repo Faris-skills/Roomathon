@@ -20,11 +20,10 @@ export const InspectionComplete = () => {
     <div className="min-h-screen flex items-center justify-center bg-pink-50 p-6">
       <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
         <h2 className="text-2xl font-bold text-pink-600 mb-4">
-          Inspection Completed 🎉
+          Inspection Wrapped Up! 🏠💫
         </h2>
         <p className="text-gray-700 mb-4">
-          Thank you for completing the inspection. A report will be generated
-          and shared with the home owner shortly.
+          You've just given this home a full check-up! We're packaging your insights into a sleek report for you and the homeowner. Thanks for being thorough!
         </p>
         {/* <a
           href="/"
