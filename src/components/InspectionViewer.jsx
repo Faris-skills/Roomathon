@@ -177,23 +177,34 @@ export default function InspectionViewer() {
                                     : 'N/A'}
                                 </td>
                                 <td className="p-4 border-t border-gray-200">
-                                    {email.status === 'active' ? (
-                                        <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1">
-                                        Processing
-                                        </span>
-                                    ) : (
+                                    {email.status === 'completed' ? (
                                         <span className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1">
                                         Completed
+                                        </span>
+                                    )
+                                    :
+                                    (
+                                        <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1">
+                                        Processing
                                         </span>
                                     )}
                                 </td>
                                 <td className="p-4 border-t border-gray-200">
-                                    <button
-                                        className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 cursor-pointer"
-                                        title="Email"
+                                   {email.status === 'completed' && email.reportUrl ? (
+                                        <a
+                                            href={email.reportUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-block"
                                         >
-                                        <EyeIcon className="w-4 h-4" />
-                                    </button>
+                                            <button
+                                            className="p-2 text-blue-600 rounded-full cursor-pointer"
+                                            title="Download Report"
+                                            >
+                                            <EyeIcon className="w-4 h-4" />
+                                            </button>
+                                        </a>
+                                    ) : null}
                                 </td>
                             </tr>
                         ))}
