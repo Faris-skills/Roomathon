@@ -23,6 +23,7 @@ export default function HomeManager() {
   const [newHomeAddress, setNewHomeAddress] = useState('');
   const [isCreatingHome, setIsCreatingHome] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const SERVER_URL = import.meta.env.VITE_SERVER_URL;
   const CLIENT_URL = import.meta.env.VITE_CLIENT_URL;
@@ -59,7 +60,8 @@ export default function HomeManager() {
     title: 'Mr',
     name: '',
     email: '',
-    homeId: ''
+    homeId: '',
+    homeName: ''
   });
 
   const [currentView, setCurrentView] = useState("homes");
@@ -108,7 +110,7 @@ export default function HomeManager() {
       return;
     }
     
-    const { title, name, email, homeId } = emailRecipient;
+    const { title, name, email, homeId, homeName } = emailRecipient;
 
     if (!homeId) {
       toast.error("No home selected.");
@@ -120,46 +122,48 @@ export default function HomeManager() {
       return;
     }
 
-      try {
-        const newInspectionDocRef = await addDoc(collection(db, 'houseInspections'), {
-          homeId: homeId,
-          ownerUserId: currentUser.uid,
-          status: 'active', // 'active', 'completed', 'inactive'
-          createdAt: Timestamp.now(),
-          name: `${title}  ${name.trim()}`,
+    setIsSendingEmail(true);
+    try {
+      const newInspectionDocRef = await addDoc(collection(db, 'houseInspections'), {
+        homeId: homeId,
+        ownerUserId: currentUser.uid,
+        status: 'active', // 'active', 'completed', 'inactive'
+        createdAt: Timestamp.now(),
+        name: `${title}  ${name.trim()}`,
+        email: email.trim()
+      });
+
+      const subject = `Inspection Invitation for Home: ${homeName}`;
+      const emailContent = `
+        <p>Hello ${title} ${name},</p>
+        <p>You are invited to inspect the home <strong>${homeName}</strong>.</p>
+        <p>Click <a href="${CLIENT_URL}/inspect/${newInspectionDocRef.id}">here</a> to view the inspection details.</p>
+        <p>Thank you,<br />
+      `;
+
+      const response = await fetch(`${SERVER_URL}/api/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           email: email.trim(),
-          createdAt: new Date()
-        });
+          subject,
+          emailContent,
+        }),
+      });
 
-        const subject = `Inspection Invitation for Home ID: ${homeId}`;
-        const emailContent = `
-          <p>Hello ${title} ${name},</p>
-          <p>You are invited to inspect the home with ID <strong>${homeId}</strong>.</p>
-          <p>Click <a href="${CLIENT_URL}/inspect/${newInspectionDocRef.id}">here</a> to view the inspection details.</p>
-          <p>Thank you,<br />Home Manager</p>
-        `;
+      const result = await response.json();
 
-        const response = await fetch(`${SERVER_URL}/api/send-email`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: email.trim(),
-            subject,
-            emailContent,
-          }),
-        });
+      toast.success(`Email invitation sent to ${title} ${name}!`);
+      console.log("Email record added:", newInspectionDocRef.id);
 
-        const result = await response.json();
-
-        toast.success(`Email invitation sent to ${title} ${name}!`);
-        console.log("Email record added:", newInspectionDocRef.id);
-
-        setEmailRecipient({ title: 'Mr', name: '', email: '', homeId: '' });
-        setIsEmailModalOpen(false);
-      } catch (err) {
-        console.error("Error sending email:", err);
-        toast.error("Failed to send email. Please try again.");
-      }
+      setEmailRecipient({ title: 'Mr', name: '', email: '', homeId: '', homeName: '' });
+      setIsEmailModalOpen(false);
+    } catch (err) {
+      console.error("Error sending email:", err);
+      toast.error("Failed to send email. Please try again.");
+    } finally {
+      setIsSendingEmail(false); // Stop loader
+    }
   }
 
   if (loadingHomes) {
@@ -210,9 +214,6 @@ export default function HomeManager() {
                   <td className="p-4 border-t border-gray-200">{home.name}</td>
                   <td className="p-4 border-t border-gray-200">{home.address || '—'}</td>
                   <td className="p-4 border-t border-gray-200">
-                    {home.createdAt?.toDate
-                      ? home.createdAt.toDate().toLocaleDateString('en-GB') // DD/MM/YYYY
-                      : 'N/A'}
                     { home.createdAt?.toDate().toLocaleDateString('en-GB') || 'N/A'}
                   </td>
                   <td className="p-4 border-t border-gray-200">
@@ -233,8 +234,8 @@ export default function HomeManager() {
                         className="p-2 text-blue-600 rounded-full cursor-pointer"
                         onClick={(e) => {
                           e.preventDefault();
-                          setEmailRecipient({ title: 'Mr', name: '', email: '', homeId: home.id });
-                           setTimeout(() => {
+                          setEmailRecipient({ title: 'Mr', name: '', email: '', homeId: home.id, homeName: home.name });
+                          setTimeout(() => {
                             setIsEmailModalOpen(true);
                           }, 0);
                         }}
@@ -249,13 +250,13 @@ export default function HomeManager() {
                       >
                         <EyeIcon className="w-4 h-4" />
                       </Link>
-                      <button
+                      {/* <button
                         className="p-2 text-red-600 rounded-full cursor-pointer"
                         onClick={() => console.log('Delete', home.id)}
                         title="Delete"
                       >
                         <TrashIcon className="w-4 h-4" />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
@@ -367,10 +368,38 @@ export default function HomeManager() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 cursor-pointer"
+                  disabled={isSendingEmail}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Send Email
+                  {isSendingEmail ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 000 8v4a8 8 0 01-8-8z"
+                        />
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Email'
+                  )}
                 </button>
+
               </div>
             </form>
           </div>

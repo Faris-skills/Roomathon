@@ -19,7 +19,7 @@ export default function Layout({ children }) {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col bg-cover bg-center" style={{ backgroundImage: "url('/var/www/html/Personal/Roomathon/src/assets/background.jpg')" }}>
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col bg-cover bg-center" style={{ backgroundImage: "url('/var/www/html/Personal/Roomathon/src/assets/background.jpg')" }}>
 
         <main className="flex-1 w-full flex flex-col items-center justify-start px-4 py-8 md:py-12 md:px-6 lg:px-8 space-y-12">
           {children}

@@ -16,7 +16,7 @@ export default function RoomViewer() {
 
   const { currentUser } = useAuth();
 
-  useEffect(() => {
+  // useEffect(() => {
     const fetchRooms = async () => {
       if (!currentUser || !homeIdFromRoute) {
         setLoading(false);
@@ -52,6 +52,9 @@ export default function RoomViewer() {
       }
     };
 
+    // fetchRooms();
+  // }, [currentUser, homeIdFromRoute]);
+  useEffect(() => {
     fetchRooms();
   }, [currentUser, homeIdFromRoute]);
   const onClose = () => setShowCreateModal(false);
@@ -104,7 +107,7 @@ export default function RoomViewer() {
               </h3>
               <p className="text-sm text-gray-500">
                 Saved on:{" "}
-                {room.createdAt?.toDate?.().toLocaleDateString() || "N/A"}
+                {room.createdAt?.toDate?.().toLocaleDateString('en-GB') || "N/A"}
               </p>
             </div>
 
@@ -143,7 +146,7 @@ export default function RoomViewer() {
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl font-bold"
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl font-bold cursor-pointer"
             >
               &times;
             </button>
@@ -152,6 +155,7 @@ export default function RoomViewer() {
             <RoomUploader
               homeId={homeIdFromRoute}
               onClose={onClose}
+              onRoomCreated={fetchRooms}
             />
           </div>
         </div>

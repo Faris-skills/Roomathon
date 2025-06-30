@@ -316,6 +316,12 @@ export const RoomInspection = () => {
     }
   };
 
+  const handleSkip = () => {
+    if (currentIndex < rooms.length - 1) {
+      navigate(`/inspect/${inspectionId}/room/${currentIndex + 1}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -479,8 +485,22 @@ export const RoomInspection = () => {
               : "bg-indigo-500 text-white hover:bg-indigo-700"
           }`}
         >
-          Previous
+          {'<'}
         </button>
+
+        {currentIndex < rooms.length - 1 && (
+          <button
+            onClick={handleSkip}
+            disabled={
+              isProcessingComparison ||
+              isSavingResult ||
+              isSubmittingInspection
+            }
+            className="px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg font-semibold transition"
+          >
+            Skip
+          </button>
+        )}
 
         <button
           onClick={handleNextOrFinish}
@@ -504,8 +524,8 @@ export const RoomInspection = () => {
           {isSubmittingInspection
             ? "Submitting..."
             : currentIndex < rooms.length - 1
-            ? "Next Room"
-            : "Submit Inspection"}
+            ? ">"
+            : "Submit"}
         </button>
       </div>
     </div>

@@ -80,7 +80,33 @@ export default function InspectionViewer() {
     });
   
     if (loading) {
-        return <p className="text-center text-indigo-600 text-lg">Loading rooms...</p>
+        return (
+            // <div className="min-h-screen flex items-center justify-center bg-black">
+                <div className="flex items-center justify-center">
+                    <svg
+                        className="animate-spin h-10 w-10 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        />
+                        <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 000 8v4a8 8 0 01-8-8z"
+                        />
+                    </svg>
+                </div>
+            // </div>
+        )
+        
     }
 
     if(!currentUser) {
@@ -92,7 +118,7 @@ export default function InspectionViewer() {
     }
 
     if (email.length === 0) {
-        return <p className="text-center text-gray-600 text-lg">No inspection emails found for this home.</p>;
+        return <p className="text-center text-white text-lg">No inspection emails found for this home.</p>;
     }
         
     return (

@@ -12,9 +12,9 @@ body {
 .log-out-button {
     display: flex;
     border-radius: 0px;
-    height: 70px;
+    /* height: 70px; */
     align-items: center;
-    background: #0f0f118c;
+    /* background: #0f0f118c; */
     color: white;
 }
 
