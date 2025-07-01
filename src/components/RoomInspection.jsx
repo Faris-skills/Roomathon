@@ -276,7 +276,16 @@ export const RoomInspection = () => {
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-center mt-auto pt-6 border-t border-gray-200">
+      <div className="flex justify-center mt-auto pt-6 border-t border-gray-200 space-x-4">
+        {/* Go Back Button */}
+        <a
+          href="/inspect/nZdVoRXRR9lUHS4FuNlo/roomList"
+          className="px-6 py-2 rounded-lg font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300"
+        >
+          Go Back
+        </a>
+
+        {/* Save Inspection Button */}
         <button
           onClick={submitAndReturn}
           disabled={isSavingResult || uploadedImageUrls.length === 0 || !difference}
@@ -289,6 +298,7 @@ export const RoomInspection = () => {
           {isSavingResult ? "Saving..." : "Save Inspection"}
         </button>
       </div>
+
     </div>
   );
 };

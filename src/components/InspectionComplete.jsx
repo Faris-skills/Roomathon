@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-// const SERVER_URL = import.meta.env.VITE_SERVER_URL;
-const SERVER_URL = "http://localhost:3000";
+const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+// const SERVER_URL = "http://localhost:3000";
 export const InspectionComplete = () => {
   const { inspectionId } = useParams();
 
