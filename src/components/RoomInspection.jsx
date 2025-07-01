@@ -17,6 +17,8 @@ import {
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { compareImagesWithAI } from "../utils/openai";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
+
 
 export const RoomInspection = () => {
   const { inspectionId, roomIndex } = useParams();
@@ -278,12 +280,12 @@ export const RoomInspection = () => {
       {/* Save Button */}
       <div className="flex justify-center mt-auto pt-6 border-t border-gray-200 space-x-4">
         {/* Go Back Button */}
-        <a
-          href="/inspect/nZdVoRXRR9lUHS4FuNlo/roomList"
+        <Link
+          to={`/inspect/${inspectionId}/roomList`}
           className="px-6 py-2 rounded-lg font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300"
         >
           Go Back
-        </a>
+        </Link>
 
         {/* Save Inspection Button */}
         <button
