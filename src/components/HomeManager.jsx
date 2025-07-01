@@ -226,10 +226,10 @@ export default function HomeManager() {
                         //   setSelectedHomeId(home.id);
                         //   setCurrentView("rooms_view");
                         // }}
-                        title="Edit"
+                        title="Add Room"
                       >
                         {/* <Link to={`/homes/${home.id}`} /> */}
-                        <PencilIcon className="w-4 h-4" />
+                        <PlusIcon className="w-4 h-4" />
                       </Link>
                       <button
                         className="p-2 text-blue-600 rounded-full cursor-pointer"
@@ -240,14 +240,14 @@ export default function HomeManager() {
                             setIsEmailModalOpen(true);
                           }, 0);
                         }}
-                        title="Email"
+                        title="Send Email"
                       >
                         <EnvelopeIcon className="w-4 h-4" />
                       </button>
                       <Link
                         className="p-2  text-yellow-600 rounded-full  cursor-pointer"
                         to={`/inspection/${home.id}`}
-                        title="View inspection report"
+                        title="View inspection"
                       >
                         <EyeIcon className="w-4 h-4" />
                       </Link>
